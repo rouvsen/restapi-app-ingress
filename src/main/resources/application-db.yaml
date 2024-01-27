@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://localhost:3306/fruits?allowPublicKeyRetrieval=true&createDatabaseIfNotExist=true&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull&useUnicode=true&characterEncoding=UTF-8
+    username: root
+    password: password
+    testWhileIdle: true
+    validationQuery: "SELECT 1;"
+    timeBetweenEvictionRunsMillis: 60000
+    testOnBorrow: true
+    validationInterval: 10000
+    logValidationErrors: true
+    hikari:
+      leakDetectionThreshold: 30000
+      validationTimeout: 300000
+      removeAbandoned: true
+      removeAbandonedTimeout: 60
+      connectionTimeout: 30000
+      idleTimeout: 600000
+      maxLifetime: 1800000
+  jpa:
+    properties:
+      hibernate:
+        temp:
+          useJdbcMetadataDefaults: "false"
+        # dialect: org.hibernate.dialect.PostgreSQLDialect
+        connection:
+          providerDisablesAutocommit: false
+    showSql: false
+    generateDdl: false
+    openInView: false
+    hibernate:
+      ddlAuto: update
+
+
