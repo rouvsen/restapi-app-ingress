@@ -15,4 +15,5 @@ public class FruitRequestDto {
 
     @NotNull
     private Double price;
+
 }

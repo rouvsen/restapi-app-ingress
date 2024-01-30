@@ -1,11 +1,6 @@
 package az.ingress.lesson4.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -30,5 +25,8 @@ public class FruitEntity {
     private String amount;
 
     private Double price;
+
+    @Enumerated(value = EnumType.STRING)
+    private State status;
 
 }

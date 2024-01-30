@@ -1,12 +1,19 @@
 package az.ingress.lesson4.service;
 
 import az.ingress.lesson4.domain.FruitEntity;
+import az.ingress.lesson4.domain.State;
 import az.ingress.lesson4.dto.FruitRequestDto;
 import az.ingress.lesson4.dto.FruitResponseDto;
 import az.ingress.lesson4.repository.FruitRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FruitServiceImpl implements FruitService {
@@ -19,8 +26,7 @@ public class FruitServiceImpl implements FruitService {
     }
 
     @Override
-    public List<FruitResponseDto> list(Integer from, Integer to) {
-
+    public List<FruitResponseDto> list() {
         return fruitRepository.findAll()
                 .stream()
                 .map(fruitEntity -> FruitResponseDto
@@ -33,9 +39,31 @@ public class FruitServiceImpl implements FruitService {
                 .toList();
     }
 
+    //TODO:1 < Done
     @Override
-    public FruitRequestDto get(Long id) {
-        return null;
+    public ResponseEntity<FruitResponseDto> get(Long id) {
+        try {
+            FruitEntity fruitEntity = fruitRepository.findById(id).orElseThrow(
+                    () -> new IllegalArgumentException("Invalid Fruit id: %s".formatted(id))
+            );
+            if (!fruitEntity.getStatus().equals(State.AVAILABLE)) {
+                throw new IllegalStateException("Fruit is unavailable in warehouse");
+            }
+            return ResponseEntity.ok(
+                    FruitResponseDto.builder()
+                            .id(fruitEntity.getId())
+                            .name(fruitEntity.getName())
+                            .price(fruitEntity.getPrice())
+                            .amount(fruitEntity.getAmount())
+                            .build()
+            );
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build();
+        } catch (Exception ex) {
+            throw new RuntimeException("Internal Error: %s".formatted(ex.getCause()));
+        }
     }
 
     @Override
@@ -55,13 +83,72 @@ public class FruitServiceImpl implements FruitService {
                 .build();
     }
 
+    //TODO:2 < Done
     @Override
-    public FruitRequestDto update(Long id, FruitRequestDto fruitDto) {
-        return null;
+    public ResponseEntity<FruitResponseDto> update(Long id, FruitRequestDto fruitDto) {
+        try {
+            Optional<FruitEntity> byId = fruitRepository.findById(id);
+            if(byId.isPresent()) {
+                FruitEntity fruitEntity = byId.get();
+                if(fruitEntity.getStatus().equals(State.AVAILABLE)) {
+                    fruitEntity.setName(fruitDto.getName());
+                    fruitEntity.setAmount(fruitDto.getAmount());
+                    fruitEntity.setPrice(fruitDto.getPrice());
+                    fruitRepository.save(fruitEntity);
+                    return ResponseEntity.ok(
+                            FruitResponseDto.builder()
+                                    .id(fruitEntity.getId())
+                                    .name(fruitEntity.getName())
+                                    .price(fruitEntity.getPrice())
+                                    .amount(fruitEntity.getAmount())
+                                    .build()
+                    );
+                }
+                throw new IllegalStateException("Fruit is unavailable in warehouse");
+            }
+            throw new IllegalArgumentException("Invalid Fruit id: %s".formatted(id));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build();
+        } catch (Exception ex) {
+            throw new RuntimeException("Internal Error: %s".formatted(ex.getCause()));
+        }
     }
 
+    //TODO:3 < Done
     @Override
-    public void delete(Long id) {
+    public ResponseEntity<?> delete(Long id) {
+        try {
+            FruitEntity fruitEntity = fruitRepository.findById(id).orElseThrow(
+                    () -> new IllegalArgumentException("Invalid Fruit id: %s".formatted(id))
+            );
+            if(!fruitEntity.getStatus().equals(State.AVAILABLE)) {
+                throw new IllegalStateException("Fruit already unavailable");
+            }
+            fruitEntity.setId(id); //double checking
+            fruitEntity.setStatus(State.UNAVAILABLE);
+            fruitRepository.save(fruitEntity);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        } catch (IllegalStateException ex) {
+            return ResponseEntity.status(HttpStatus.LOCKED).build();
+        } catch (Exception ex) {
+            throw new RuntimeException("Internal error: %s".formatted(ex.getCause()));
+        }
+    }
 
+    //TODO:4 Pagination < Done
+    @Override
+    public Slice<FruitResponseDto> paginate(Pageable pageable) {
+        Page<FruitEntity> pages = fruitRepository.findAll(pageable);
+        return pages.map(el ->
+                FruitResponseDto.builder()
+                    .id(el.getId())
+                    .name(el.getName())
+                    .price(el.getPrice())
+                    .amount(el.getAmount())
+                    .build());
     }
 }
