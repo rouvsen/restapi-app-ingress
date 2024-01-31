@@ -5,7 +5,7 @@ import az.ingress.lesson4.domain.State;
 import az.ingress.lesson4.dto.FruitRequestDto;
 import az.ingress.lesson4.dto.FruitResponseDto;
 import az.ingress.lesson4.repository.FruitRepository;
-import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -46,7 +46,7 @@ public class FruitServiceImpl implements FruitService {
             FruitEntity fruitEntity = fruitRepository.findById(id).orElseThrow(
                     () -> new IllegalArgumentException("Invalid Fruit id: %s".formatted(id))
             );
-            if (!fruitEntity.getStatus().equals(State.AVAILABLE)) {
+            if (fruitEntity.getStatus() != State.AVAILABLE) {
                 throw new IllegalStateException("Fruit is unavailable in warehouse");
             }
             return ResponseEntity.ok(
@@ -72,6 +72,7 @@ public class FruitServiceImpl implements FruitService {
                 .amount(fruitDto.getAmount())
                 .price(fruitDto.getPrice())
                 .name(fruitDto.getName())
+                .status(State.AVAILABLE)
                 .build();
         FruitEntity fruit1 = fruitRepository.save(fruit);
         return FruitResponseDto
@@ -90,7 +91,7 @@ public class FruitServiceImpl implements FruitService {
             Optional<FruitEntity> byId = fruitRepository.findById(id);
             if(byId.isPresent()) {
                 FruitEntity fruitEntity = byId.get();
-                if(fruitEntity.getStatus().equals(State.AVAILABLE)) {
+                if(fruitEntity.getStatus() == State.AVAILABLE) {
                     fruitEntity.setName(fruitDto.getName());
                     fruitEntity.setAmount(fruitDto.getAmount());
                     fruitEntity.setPrice(fruitDto.getPrice());
@@ -123,7 +124,7 @@ public class FruitServiceImpl implements FruitService {
             FruitEntity fruitEntity = fruitRepository.findById(id).orElseThrow(
                     () -> new IllegalArgumentException("Invalid Fruit id: %s".formatted(id))
             );
-            if(!fruitEntity.getStatus().equals(State.AVAILABLE)) {
+            if(fruitEntity.getStatus() != State.AVAILABLE) {
                 throw new IllegalStateException("Fruit already unavailable");
             }
             fruitEntity.setId(id); //double checking
@@ -142,13 +143,18 @@ public class FruitServiceImpl implements FruitService {
     //TODO:4 Pagination < Done
     @Override
     public Slice<FruitResponseDto> paginate(Pageable pageable) {
-        Page<FruitEntity> pages = fruitRepository.findAll(pageable);
-        return pages.map(el ->
-                FruitResponseDto.builder()
-                    .id(el.getId())
-                    .name(el.getName())
-                    .price(el.getPrice())
-                    .amount(el.getAmount())
-                    .build());
+        List<FruitResponseDto> fruits = fruitRepository.findAll()
+                .stream().filter(el -> el.getStatus() == State.AVAILABLE)
+                .map(el -> FruitResponseDto.builder()
+                        .id(el.getId())
+                        .name(el.getName())
+                        .price(el.getPrice())
+                        .amount(el.getAmount())
+                        .build())
+                .toList();
+        return new PageImpl<>(fruits, pageable, fruits.size() > pageable.getPageSize()
+                ? pageable.getPageSize() + 1
+                : fruits.size()
+        );
     }
 }

@@ -25,7 +25,6 @@ public class FruitApi {
 
     private final FruitService fruitService;
 
-
     public FruitApi(FruitService fruitService) {
         System.out.println("Injected instance of fruit service " + fruitService);
         this.fruitService = fruitService;
