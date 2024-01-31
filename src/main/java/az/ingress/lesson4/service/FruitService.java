@@ -1,5 +1,6 @@
 package az.ingress.lesson4.service;
 
+import az.ingress.lesson4.domain.FruitEntity;
 import az.ingress.lesson4.dto.FruitRequestDto;
 import az.ingress.lesson4.dto.FruitResponseDto;
 import org.springframework.data.domain.Pageable;

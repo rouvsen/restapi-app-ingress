@@ -5,7 +5,6 @@ import az.ingress.lesson4.domain.State;
 import az.ingress.lesson4.dto.FruitRequestDto;
 import az.ingress.lesson4.dto.FruitResponseDto;
 import az.ingress.lesson4.repository.FruitRepository;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -141,20 +140,14 @@ public class FruitServiceImpl implements FruitService {
     }
 
     //TODO:4 Pagination < Done
-    @Override
     public Slice<FruitResponseDto> paginate(Pageable pageable) {
-        List<FruitResponseDto> fruits = fruitRepository.findAll()
-                .stream().filter(el -> el.getStatus() == State.AVAILABLE)
+        return fruitRepository.findAllByStatus(State.AVAILABLE, pageable)
                 .map(el -> FruitResponseDto.builder()
-                        .id(el.getId())
-                        .name(el.getName())
-                        .price(el.getPrice())
-                        .amount(el.getAmount())
-                        .build())
-                .toList();
-        return new PageImpl<>(fruits, pageable, fruits.size() > pageable.getPageSize()
-                ? pageable.getPageSize() + 1
-                : fruits.size()
-        );
+                                .id(el.getId())
+                                .name(el.getName())
+                                .amount(el.getAmount())
+                                .price(el.getPrice())
+                                .build());
     }
+
 }

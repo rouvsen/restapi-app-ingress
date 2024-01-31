@@ -40,7 +40,7 @@ public class FruitApi {
         return fruitService.get(id);
     }
 
-    @GetMapping("/pagination") //path: http://localhost:9090/v1/fruits/pagination?size=3&page=0
+    @GetMapping("/pagination") //url: http://localhost:9090/v1/fruits/pagination2?size=2&page=0
     public Slice<FruitResponseDto> get(Pageable pageable) {
         return fruitService.paginate(pageable);
     }
